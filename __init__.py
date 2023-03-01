@@ -1,1 +1,1 @@
-from .utils import detect
+from .utils import detector, logger

@@ -1,63 +1,45 @@
-""" 
-
-"""
-
 import os
-from json import dumps, loads
-from datetime import datetime
-from sys import argv
+import sys
+from logger import logger
+### from json import dumps, loads
 
-### Глобальные параметры
+### Глобальные CV параметры
 MIN_MATCH_COUNT = 10
 FLANN_INDEX_PARAMS = {"algorithm":1, "trees":5}
 FLANN_SEARCH_PARAMS = {"checks":50}
 
-def decorate_logging(func):
-    ###
-    def _(*args, **kwargs):
-        """ Инициализация системы логирования
-        """
-        import logging
-        
-        
-        now = datetime.now()
-        JOB = str(now.date()), ''.join(x for x in str(now)[:19] if x.isdigit())
-        
-        ### Параметры логирования
-        path = './logs/{}'.format(now.date())
-        os.makedirs(path, exist_ok=True)
-        logging.basicConfig(filename=os.path.join(path, '{}.log'.format(JOB)), level=logging.DEBUG)
-        
-        return func(*args, **kwargs)
-
-    return _
-
-@decorate_logging
-def detect(
+@logger
+def detector(
     query_img_path:str,
     train_img_path:str,
-    params:dict={
-        "MIN_MATCH_COUNT":MIN_MATCH_COUNT,
-        "FLANN_INDEX_PARAMS": FLANN_INDEX_PARAMS,
-        "FLANN_SEARCH_PARAMS": FLANN_SEARCH_PARAMS
-    }
+    params:dict={},
+    log_to_file:bool=False,
+    log:object=None,
+    **kwargs
 ) -> None:
     """ Определение объекта на изображении
 
     >>> ... query_img_path ~ (str) - путь к объекту
     >>> ... train_img_path ~ (str) - путь к изображению
     >>> ... params ~ (dict) - набор корректирующих параметров
-    >>> return (None)
+    >>> ... log_to_file ~ (bool) - способ логирования процесса выполнения:
+                = True - в файл директории logs/
+                = False - в sys.stdout
+    >>> ... log ~ (object) – объект, реализующий логирование
+    >>> return (None) – функция логирует результат в sys.stdout
     """
+
+    print('keks')
+    sys.exit()
 
     import cv2 as cv
     import numpy as np
     from math import acos, sqrt, pi
     from matplotlib import pyplot as plt
 
-    MIN_MATCH_COUNT = params.get('MIN_MATCH_COUNT', None)
-    FLANN_INDEX_PARAMS = params.get('FLANN_INDEX_PARAMS', None)
-    FLANN_SEARCH_PARAMS = params.get('FLANN_SEARCH_PARAMS', None)
+    MIN_MATCH_COUNT = params.get('MIN_MATCH_COUNT', MIN_MATCH_COUNT)
+    FLANN_INDEX_PARAMS = params.get('FLANN_INDEX_PARAMS', FLANN_INDEX_PARAMS)
+    FLANN_SEARCH_PARAMS = params.get('FLANN_SEARCH_PARAMS', FLANN_SEARCH_PARAMS)
 
     query_img = cv.imread(query_img_path, cv.IMREAD_GRAYSCALE) ### объект
     train_img = cv.imread(train_img_path, cv.IMREAD_GRAYSCALE) ### изображение
@@ -142,19 +124,20 @@ def detect(
 
 if __name__ == '__main__': 
     ### Проверка на наличие необходимого количества параметров
-    if len(argv[1:]) < 2: raise Exception(
-        'Недостаточное количество входных параметров: {}.\n'.format(argv[1:]) + \
+    if len(sys.argv[1:]) < 2: raise Exception(
+        'Недостаточное количество входных параметров: {}.\n'.format(sys.argv[1:]) + \
         'Обязательно наличие пути к образцу, пути к изображению.'
     )
     ### Проверка на корректность указаных параметров
-    for path in argv[1:3]:
+    for path in sys.argv[1:3]:
         if not os.path.exists(path): raise Exception(
         'Некорректный путь к файлу: {}.'.format(path)
     )
     ### Если detect.py вызван корректно
-    detect(
-        query_img_path=argv[1], 
-        train_img_path=argv[2], 
+    detector(
+        query_img_path=sys.argv[1], 
+        train_img_path=sys.argv[2], 
         ### Нет необходимости в коррекции параметров при первоначальном вызове
         # **({"params": loads(argv[3].replace('\'', '"'))} if len(argv[1:]) == 3 else {})
+        log_to_file=True
     )
