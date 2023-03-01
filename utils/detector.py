@@ -1,62 +1,64 @@
 import os
 import sys
 from logger import logger
-### from json import dumps, loads
+from json import loads
 
-### Глобальные CV параметры
-MIN_MATCH_COUNT = 10
-FLANN_INDEX_PARAMS = {"algorithm":1, "trees":5}
-FLANN_SEARCH_PARAMS = {"checks":50}
 
 @logger
 def detector(
     query_img_path:str,
     train_img_path:str,
-    params:dict={},
+    params:dict={
+        ### Дефолтные значения
+        "MIN_MATCH_COUNT":10,
+        "FLANN_INDEX_PARAMS":{"algorithm":1, "trees":5},
+        "FLANN_SEARCH_PARAMS":{"checks":50}
+    },
     log_to_file:bool=False,
     log:object=None,
+    attempt:int=1,
     **kwargs
 ) -> None:
     """ Определение объекта на изображении
 
-    >>> ... query_img_path ~ (str) - путь к объекту
+    >>> ... query_img_path ~ (str) - путь к фрагменту
     >>> ... train_img_path ~ (str) - путь к изображению
     >>> ... params ~ (dict) - набор корректирующих параметров
     >>> ... log_to_file ~ (bool) - способ логирования процесса выполнения:
                 = True - в файл директории logs/
                 = False - в sys.stdout
     >>> ... log ~ (object) – объект, реализующий логирование
+    >>> ... attempt ~ (int) - номер попытки
     >>> return (None) – функция логирует результат в sys.stdout
     """
-
-    print('keks')
-    sys.exit()
 
     import cv2 as cv
     import numpy as np
     from math import acos, sqrt, pi
     from matplotlib import pyplot as plt
 
-    MIN_MATCH_COUNT = params.get('MIN_MATCH_COUNT', MIN_MATCH_COUNT)
-    FLANN_INDEX_PARAMS = params.get('FLANN_INDEX_PARAMS', FLANN_INDEX_PARAMS)
-    FLANN_SEARCH_PARAMS = params.get('FLANN_SEARCH_PARAMS', FLANN_SEARCH_PARAMS)
+    min_match_count, flann_index_params, flann_search_params = params
+    log.info('Параметры детекции:\n"{}"', params)
 
-    query_img = cv.imread(query_img_path, cv.IMREAD_GRAYSCALE) ### объект
-    train_img = cv.imread(train_img_path, cv.IMREAD_GRAYSCALE) ### изображение
+    query_img = cv.imread(log.transfer(query_img_path, 'query'), cv.IMREAD_GRAYSCALE) ### объект
+    train_img = cv.imread(log.transfer(train_img_path, 'train'), cv.IMREAD_GRAYSCALE) ### изображение
+    log.info('Изображения прочитаны')
+    
+    sys.exit()
 
     sift = cv.SIFT_create() ### инициализация детектора
     ### Поиск ключевых точек и дескрипторов
     query_key, query_des = sift.detectAndCompute(query_img, None)
     train_key, train_des = sift.detectAndCompute(train_img, None)
     ### Мэтчинг
-    flann = cv.FlannBasedMatcher(FLANN_INDEX_PARAMS, FLANN_SEARCH_PARAMS)
+    flann = cv.FlannBasedMatcher(flann_index_params, flann_search_params)
     matches = flann.knnMatch(query_des, train_des, k=2)
 
     ### Определение подходящих мэтчей по проверке Lowe
     good_matches = [m for m, n in matches if m.distance < 0.7 * n.distance]
 
-    if len(good_matches) < MIN_MATCH_COUNT: raise Exception( ### обработка исключений
-        "Недостаточно совпадений найдено - {}/{}".format(len(good_matches), MIN_MATCH_COUNT)
+    if len(good_matches) < min_match_count: raise Exception(
+        "Недостаточно совпадений найдено - {}/{}".format(len(good_matches), min_match_count)
     )
 
     ### Гомография
@@ -88,21 +90,8 @@ def detector(
 
     angle = round(acos(shifted_x / radius) * 180 / pi, 1)
     if round(shifted_y, 1) != 0: angle = angle if shifted_y > 0 else -angle
-
-    # message = ("" + \
-    #     "Координаты объекта: {coords}\n" + \
-    #     "Смещение на {x_shift} по X и на {y_shift} по Y\n" + \
-    #     "Поворот относительно верхней левой точки на {angle}º{clockwise}"
-    # ).format(
-    #     coords=[(*x[0],) for x in train_pts],
-    #     x_shift=round(train_pts[0][0][0], 3),
-    #     y_shift=round(train_pts[0][0][1], 3),
-    #     angle=angle,
-    #     clockwise='' if clockwise is None else \
-    #         ' {} часовой'.format('по' if clockwise == True else 'против')
-    # )
-
-    # print(message)
+    ### Вывод итогового результата
+    print([shifted_x, shifted_y, angle,])
 
     # ### Отрисовка результата
     # final_img = cv.drawMatches(
@@ -123,16 +112,22 @@ def detector(
 
 
 if __name__ == '__main__': 
-    ### Проверка на наличие необходимого количества параметров
-    if len(sys.argv[1:]) < 2: raise Exception(
-        'Недостаточное количество входных параметров: {}.\n'.format(sys.argv[1:]) + \
+    ### Проверка на наличие необходимого/достаточного количества параметров
+    if len(sys.argv[1:]) not in (2, 3,): raise Exception(
+        'Некорректное количество входных параметров: {}.\n'.format(sys.argv[1:]) + \
         'Обязательно наличие пути к образцу, пути к изображению.'
     )
-    ### Проверка на корректность указаных параметров
+    ### Проверка на корректность указаных путей
     for path in sys.argv[1:3]:
         if not os.path.exists(path): raise Exception(
         'Некорректный путь к файлу: {}.'.format(path)
     )
+    ### Проверка на корректность дампа словаря
+    if len(sys.argv[1:]) == 3:
+        try: params = loads(sys.argv[3])
+        except Exception as exc: raise Exception(
+            'Некорректно задан конфигурационный словарь: {}.\n{}'.format(sys.argv[3], exc)
+        )
     ### Если detect.py вызван корректно
     detector(
         query_img_path=sys.argv[1], 
