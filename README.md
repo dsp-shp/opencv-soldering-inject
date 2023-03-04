@@ -10,16 +10,12 @@
   - ```2023-03-01/ 2023-03-02/ 2023-03-03/ ...``` – поддиректории, содержащие результаты тестирования (партиционирование по дате выполнения) 
 - ```tests/``` – директория для хранения материалов и результатов тестирования
 
-<br>
-
 ### Используемые компоненты
 - ```python3``` – *https://docs.python.org/3/faq/general.html*
 - ```pip3``` – *https://pypi.org/project/pip/*
 - Неоходимые библиотеки: 
   - ```opencv-contib-python``` – *https://pypi.org/project/opencv-contrib-python/*
   - ```matplotlib``` – *https://pypi.org/project/matplotlib/*
-
-<br>
 
 ### Интеграция с C# кодом
 
