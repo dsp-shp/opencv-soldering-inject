@@ -12,7 +12,7 @@
 
 ### Используемые компоненты
 - ```python3``` – *https://docs.python.org/3/faq/general.html*
-- ```pip3``` – *https://pypi.org/project/pip/*
+- ```pip``` – *https://pypi.org/project/pip/*
 - Неоходимые библиотеки: 
   - ```opencv-contib-python``` – *https://pypi.org/project/opencv-contrib-python/*
   - ```matplotlib``` – *https://pypi.org/project/matplotlib/*
