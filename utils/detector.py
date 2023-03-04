@@ -31,7 +31,7 @@ def detector(
                 = True - в файл директории logs/
                 = False - в sys.stdout
     >>> ... log ~ (object) – объект, реализующий логирование
-    >>> ... attempt ~ (int) - номер попытки
+    >>> ... attempt ~ (int) - номер попытки выполнения
     >>> return (None) – функция логирует результат в sys.stdout
     """
 
