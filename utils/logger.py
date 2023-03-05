@@ -3,17 +3,19 @@ from sys import stdout
 from datetime import datetime
 
 class logger(object):
-    
     def __init__(self, func) -> None: self.func = func
-    
+
     def __call__(self, *args, **kwargs): return self.init(self.func, *args, **kwargs)
 
-    def init(self, func, *args, **kwargs) -> None:
+    def init(self, func, *args, attempt:int=1, **kwargs) -> None:
         """ Инициализация системы логирования поверх выполняемого процесса
 
         >>> ... func ~ (callable) – выполняемая функция
         >>> return (func ~ callable) – func с набором дополнительных параметров
         """
+        ### Если используется собственная система логирования (например, при тестировании)
+        if kwargs.get('log', None): return func(*args, **kwargs)
+
         import logging
         
         self.JOB, self.LOGS = datetime.now().strftime('%y%m%d-%H%M%S'), None
@@ -38,11 +40,14 @@ class logger(object):
                 (message.format(*args, **kwargs).replace('\n', '\n\t')) + \
                 ('' if divide == False else '\n' + '-'*80)
             )
+        ### Реализация метода обработки изображений
+        self.process = self.transfer if self.LOGS else lambda path, type: path
+        
         ### Логирование начала выполнения процесса
         self.info(
             'Выполнение задачи ({}), попытка: {}',
             self.JOB,
-            kwargs.get('attempt', 1),
+            attempt,
             status='INFO',
             divide=True,
         )
@@ -55,6 +60,8 @@ class logger(object):
             self.info(str(e), status='ERROR')
         finally:
             self.info('Задача ({}) {}', self.JOB, message, status=status, divide=True)
+            if status == 'FAILED' and attempt < 4:
+                self.init(func, *args, attempt=attempt+1, **kwargs)
         
         pass
 
@@ -69,7 +76,7 @@ class logger(object):
     #         ('' if divide == False else '\n' + self.SEPR)
     #     )
 
-    def transfer(self, path:str, type:str) -> list:
+    def transfer(self, path:str, type:str) -> str:
         """ Бэкапирование изображений в logs/ папку
 
         >>> ... path ~ (str) - путь к исходному файлу
@@ -78,10 +85,9 @@ class logger(object):
                     = 'train' – изображение
         >>> return (str) – путь к бэкапу изображения
         """
+
         import shutil
         
-        if not self.LOGS: return path ### пропустить если вывод осуществляется в stdout
-
         dest = os.join(self.LOGS, '{}_{}.{}'.format(self.JOB, type, path.split('.')[-1]))
         shutil.copyfile(path, dest, follow_symlinks=True)
         self.info('\tИзображение "{}" успешно бэкапировано в "{}"', path, dest, prefix=False)

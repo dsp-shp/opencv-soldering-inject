@@ -19,9 +19,8 @@ def detector(
     params:dict=PARAMS,
     logfile:bool=True,
     log:object=None,
-    attempt:int=1,
     **kwargs
-) -> None:
+) -> dict:
     """ Определение объекта на изображении
 
     >>> ... query_path ~ (str) - путь к фрагменту
@@ -31,7 +30,6 @@ def detector(
                 = True - в файл директории logs/
                 = False - в sys.stdout
     >>> ... log ~ (object) – объект, реализующий логирование
-    >>> ... attempt ~ (int) - номер попытки выполнения
     >>> return (None) – функция логирует результат в sys.stdout
     """
 
@@ -45,8 +43,8 @@ def detector(
     log.info('Параметры детекции:\n"{}"', params)
 
     log.info('Обработка изображений:')
-    query_img = cv.imread(log.transfer(query_path, 'query'), cv.IMREAD_GRAYSCALE) ### фрагмент
-    train_img = cv.imread(log.transfer(train_path, 'train'), cv.IMREAD_GRAYSCALE) ### изображение
+    query_img = cv.imread(log.process(query_path, 'query'), cv.IMREAD_GRAYSCALE) ### фрагмент
+    train_img = cv.imread(log.process(train_path, 'train'), cv.IMREAD_GRAYSCALE) ### изображение
     log.info('Изображения прочитаны')
     
     detector = cv.SIFT_create() ### инициализация детектора
@@ -128,7 +126,7 @@ def detector(
     log.info('Отрисовка результата' + ('' if not reslt_path else ':\n"{}"'.format(reslt_path)))
     plt.show() if not log.LOGS else plt.savefig(reslt_path, bbox_inches='tight')
 
-    pass
+    return shifts
 
 
 if __name__ == '__main__':

@@ -23,9 +23,8 @@ def detector(
     params:dict=PARAMS, ### глобально предопределенный набор параметров
     logfile:bool=True,
     log:object=None,
-    attempt:int=1,
     **kwargs ### экстра параметры
-) -> None:
+) -> dict:
     ...
 ```
 
@@ -40,10 +39,14 @@ def detector(
 - ```logfile:bool``` – способ логирования процесса выполнения:
   - ```= True``` - в файл директории ```logs/```
   - ```= False``` - в sys.stdout
-- ```log:object``` – объект, реализующий логирование
-- ```attempt:int``` – номер попытки выполнения
+- ```log:object``` – объект, реализующий логирование:<br>
+*«По умолчанию ```log=None```, в случае использования своей системы логирования, необходима реализация на ее стороне методов ```info(...)``` и ```process(...)»```*
 
-Функция ничего не возвращает, но выводит в stdout список (в дальнейшем он считывается внутри C# окружения), содержащий в себе значения смещения и поворота фрагмента относительно изображения, например:
+Функция возвращает словарь вида:
+```python
+{"x1":x1, "y1":y1, "x2":x2, "y2":y2, "r":r} ### где x1, y1, ... – некоторые float значения
+```
+... и выводит в stdout список (в дальнейшем он считывается внутри C# окружения), содержащий в себе значения смещения и поворота фрагмента относительно изображения, например:
 ```
 [-0.1, -0.2, 3.4, 4.5, -15.0]
 ```
@@ -55,7 +58,8 @@ def detector(
 Система логирования реализуется как класс-декоратор поверх выполняемой задачи, и предоставляет следующие методы:
 - ```init(...)``` – инициализация системы и определение параметров логирования
 - ```info(...)``` – непосредственно логирование
-- ```transfer(...)``` – бэкапирование изображений в ```logs/``` директорию
+- ```process(...)``` – обработка изображений
+- ```transfer(...)``` – бэкапирование изображений в ```logs/``` директорию, перегружает ```process(...)``` функцию в случае с ```logfile=True```
 
 ```python
 class logger(object):
@@ -63,11 +67,13 @@ class logger(object):
     def __init__(self, func) -> None: self.func = func    
     def __call__(self, *args, **kwargs): return self.init(self.func, *args, **kwargs)
     ### Реализация системных методов
-    def init(self, func:callable, *args, **kwargs) -> None: 
+    def init(self, func:callable, *args, attempt:int=1, **kwargs) -> None:
         ...
     def info(self, message:str, *args, prefix:bool=True, status:str='INFO', divide:bool=False) -> None: 
         ... ### фактически реализован как self.lambda
-    def transfer(self, path:str, type:str) -> list: 
+    def transfer(self, path:str, type:str) -> str: 
+        ... ### фактически реализован как self.lambda
+    def process(self, path:str, type:str) -> str: 
         ...
 ```
 
