@@ -56,6 +56,8 @@ def detector(
 - ```transfer(...)``` – бэкапирование изображений в ```logs/``` директорию
 
 ```python
+from logger import logger
+
 class logger(object):
     ### Инициализация и метод вызова для декорации
     def __init__(self, func) -> None: self.func = func    
