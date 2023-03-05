@@ -63,8 +63,8 @@ class logger(object):
     ### Реализация системных методов
     def init(self, func:callable, *args, **kwargs) -> None: 
         ...
-    def info(self, message:str, *args, prefix:bool=True, status:str='INFO', divide:bool=False) -> None: ### фактически реализован как self.lambda
-        ...
+    def info(self, message:str, *args, prefix:bool=True, status:str='INFO', divide:bool=False) -> None: 
+        ... ### фактически реализован как self.lambda
     def transfer(self, path:str, type:str) -> list: 
         ...
 ```
