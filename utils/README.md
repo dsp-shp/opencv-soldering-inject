@@ -60,6 +60,7 @@ def detector(
 - ```info(...)``` – непосредственно логирование
 - ```process(...)``` – обработка изображений
 - ```transfer(...)``` – бэкапирование изображений в ```logs/``` директорию, перегружает ```process(...)``` функцию в случае с ```logfile=True```
+- ```retain(...)``` – удаление неактуальных дневных партиций в ```logs/``` директорию
 
 ```python
 class logger(object):
@@ -71,9 +72,11 @@ class logger(object):
         ...
     def info(self, message:str, *args, prefix:bool=True, status:str='INFO', divide:bool=False) -> None: 
         ... ### фактически реализован как self.lambda
+    def process(self, path:str, type:str) -> str: 
+        ...
     def transfer(self, path:str, type:str) -> str: 
         ... ### фактически реализован как self.lambda
-    def process(self, path:str, type:str) -> str: 
+    def retain(self, logs:str, days:int) -> None:
         ...
 ```
 

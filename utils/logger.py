@@ -1,20 +1,23 @@
-from os import path as os, makedirs
+import os
+import shutil
 from sys import stdout
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class logger(object):
-    def __init__(self, func) -> None: self.func = func
+    
+    def __init__(self, func) -> None: 
+        self.func = func; self.retain()
 
-    def __call__(self, *args, **kwargs): return self.init(self.func, *args, **kwargs)
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs) if kwargs.get('log', None) \
+            else self.init(self.func, *args, **kwargs)
 
-    def init(self, func, *args, attempt:int=1, **kwargs) -> None:
+    def init(self, func, *args, logs:str='../logs/', attempt:int=1, **kwargs) -> None:
         """ Инициализация системы логирования поверх выполняемого процесса
 
         >>> ... func ~ (callable) – выполняемая функция
         >>> return (func ~ callable) – func с набором дополнительных параметров
         """
-        ### Если используется собственная система логирования (например, при тестировании)
-        if kwargs.get('log', None): return func(*args, **kwargs)
 
         import logging
         
@@ -22,14 +25,14 @@ class logger(object):
         
         ### Определение параметров логирования
         if kwargs.get('logfile', True) == True:
-            self.LOGS = os.abspath('../logs/' + str(datetime.now().date()))
-            makedirs(self.LOGS, exist_ok=True)
+            self.LOGS = os.path.abspath(logs + str(datetime.now().date()))
+            os.makedirs(self.LOGS, exist_ok=True)
         logging.basicConfig(
             level=logging.INFO,
             format='%(message)s',
             **(
                 {"stream": stdout} if kwargs.get('logfile', True) == False else \
-                {"filename": os.join(self.LOGS, '{}.log'.format(self.JOB))}
+                {"filename": os.path.join(self.LOGS, '{}.log'.format(self.JOB))}
             )
         )
         ### Реализация метода логирования класса
@@ -42,7 +45,7 @@ class logger(object):
             )
         ### Реализация метода обработки изображений
         self.process = self.transfer if self.LOGS else lambda path, type: path
-        
+
         ### Логирование начала выполнения процесса
         self.info(
             'Выполнение задачи ({}), попытка: {}',
@@ -77,19 +80,31 @@ class logger(object):
     #     )
 
     def transfer(self, path:str, type:str) -> str:
-        """ Бэкапирование изображений в logs/ папку
-
+        """ Бэкапирование изображений в logs/ директорию
+        
         >>> ... path ~ (str) - путь к исходному файлу
         >>> ... type ~ (str) – тип изображения:
                     = 'query' – фрагмент
                     = 'train' – изображение
         >>> return (str) – путь к бэкапу изображения
         """
-
-        import shutil
         
-        dest = os.join(self.LOGS, '{}_{}.{}'.format(self.JOB, type, path.split('.')[-1]))
+        dest = os.path.join(self.LOGS, '{}_{}.{}'.format(self.JOB, type, path.split('.')[-1]))
         shutil.copyfile(path, dest, follow_symlinks=True)
         self.info('\tИзображение "{}" успешно бэкапировано в "{}"', path, dest, prefix=False)
         
         return dest
+    
+    def retain(self, logs:str='../logs/', days:int=3) -> None:
+        """ Удаление неактуальных дневных партиций в logs/ директории
+
+        >>> ... logs ~ (str) – logs/ директория
+        >>> ... days ~ (int) – глубина сохранения
+        >>> return (None)
+        """
+        
+        logs = os.path.abspath(logs)
+        for x in os.listdir(logs):
+            path = os.path.join(logs, x)
+            if os.path.isdir(path) and x < str(datetime.now().date() - timedelta(days=days)):
+                shutil.rmtree(path)

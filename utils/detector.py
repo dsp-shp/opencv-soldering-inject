@@ -1,5 +1,5 @@
 import cv2 as cv
-from os import path as os
+import os
 from sys import argv
 from logger import logger
 from json import loads
@@ -82,8 +82,8 @@ def detector(
         img=train_img, 
         pts=[np.int32(train_pts)], 
         isClosed=True, 
-        color=255, 
-        thickness=5, 
+        color=255,
+        thickness=2, 
         lineType=cv.LINE_AA
     )
     log.info('Определение координат исходного фрагмента:\n"{}"', [[*x[0]] for x in train_pts])
@@ -95,18 +95,18 @@ def detector(
     angle = round(acos(shifted_x / radius) * 180 / pi, 1) * (1 if shifted_y >= 0 else -1)
     shifts = {
         'x1': round(train_pts[0][0][0], 3),
-        'y1': round(train_pts[0][0][1], 3), 
-        'x2': round(train_pts[2][0][0], 3), 
-        'y2': round(train_pts[2][0][1], 3), 
+        'y1': round(train_pts[0][0][1], 3),
+        'x2': round(train_pts[2][0][0], 3),
+        'y2': round(train_pts[2][0][1], 3),
         'r': angle
     }
     log.info('Определение параметров смещения (положительно при повороте по часовой):\n"{}"', shifts,)
 
     ### Вывод итогового результата
-    print([*shifts.values()])
+    if log.JOB: print([*shifts.values()])
     log.info('Вывод результата в STDOUT: "{}"', *([*shifts.values()],))
 
-    ### Отрисовка результата
+    ### Отрисовка мэтчей
     final_img = cv.drawMatches(
         img1=query_img, 
         keypoints1=query_key, 
@@ -116,17 +116,20 @@ def detector(
         outImg=None,
         matchesMask=matches_mask,
         **{ ### параметры отрисовки
-            "matchColor":(0,255,0),
+            "matchColor":(210,210,70),
             "singlePointColor":None,
             "flags":2
         }
     )
     plt.imshow(final_img, 'gray'), plt.axis('off')
-    reslt_path = None if not log.LOGS else os.join(log.LOGS, log.JOB+'_reslt.png')
+
+    ### Отрисовка результата
+    reslt_path = None if not log.LOGS else os.path.join(log.LOGS, log.JOB+'_reslt.png')
     log.info('Отрисовка результата' + ('' if not reslt_path else ':\n"{}"'.format(reslt_path)))
-    plt.show() if not log.LOGS else plt.savefig(reslt_path, bbox_inches='tight')
+    if log.JOB: plt.show() if not log.LOGS else plt.savefig(reslt_path, bbox_inches='tight')
 
     return shifts
+
 
 
 if __name__ == '__main__':
@@ -137,7 +140,7 @@ if __name__ == '__main__':
     )
     ### Проверка на корректность указаных путей
     for arg in argv[1:3]:
-        if not os.exists(arg): raise Exception(
+        if not os.path.exists(arg): raise Exception(
         'Некорректный путь к файлу: {}.'.format(arg)
     )
     ### Проверка на корректность дампа словаря
