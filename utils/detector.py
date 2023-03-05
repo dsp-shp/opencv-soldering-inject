@@ -131,7 +131,6 @@ def detector(
     return shifts
 
 
-
 if __name__ == '__main__':
     ### Проверка на наличие необходимого/достаточного количества параметров
     if len(argv[1:]) not in (2, 3,): raise Exception(

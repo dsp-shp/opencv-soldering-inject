@@ -3,10 +3,11 @@ import os
 from logger import logger
 from detector import detector, PARAMS
 
-### Реализация сисетмы логирования для тестирования
+### Реализация системы логирования для тестирования
 class test_logger: JOB, LOGS, process, info = None, None, lambda path, type: path, \
     lambda *args, **kwargs: None
 
+### Тестирование детекции
 class detectorTest(unittest.TestCase):
 
     def _(self, query_path:str, train_path:str, correct:tuple) -> None:
@@ -35,6 +36,7 @@ class detectorTest(unittest.TestCase):
     def test_1(self) -> None:
         self._('unit-detector_query.png', 'unit-detector-1_train.png', (141, -39, 456, 194, -3))
 
+### Тестирование методов логирования
 class loggerTest(unittest.TestCase):
 
     def test_retain(self) -> None:
@@ -52,7 +54,6 @@ class loggerTest(unittest.TestCase):
             len_before, 
             len_after
         )
-
 
 
 if __name__ == '__main__': unittest.main()
