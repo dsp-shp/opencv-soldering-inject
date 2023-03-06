@@ -65,7 +65,7 @@ class logger(object):
             self.info(str(e), status='ERROR')
         finally:
             self.info('Задача ({}) {}', self.JOB, message, status=status, divide=True)
-            if status == 'FAILED' and attempt < 4:
+            if status == 'FAILED' and attempt < 3:
                 self.init(func, *args, attempt=attempt+1, **kwargs)
         
         pass

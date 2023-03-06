@@ -1,2 +1,2 @@
-from detector import detector
-from logger import logger
+from .detector import detector
+from .logger import logger

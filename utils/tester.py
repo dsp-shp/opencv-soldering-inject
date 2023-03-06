@@ -1,7 +1,7 @@
-import unittest
 import os
-from logger import logger, HOME
+import unittest
 from detector import detector, PARAMS
+from logger import logger, HOME
 
 ### Реализация системы логирования для тестирования
 class logger_: JOB, LOGS, process, info = None, None, lambda path, type: path, \

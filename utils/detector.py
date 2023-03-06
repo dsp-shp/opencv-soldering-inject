@@ -1,8 +1,9 @@
 import cv2 as cv
 import os
-from sys import argv
-from logger import logger
+import sys
 from json import loads
+try: from .logger import logger ### поддержка python3 -c "detector(...)"
+except: from logger import logger ### поддержка python3 detector.py ...
 
 ### Дефолтные значения
 PARAMS = {
@@ -133,26 +134,26 @@ def detector(
 
 if __name__ == '__main__':
     ### Проверка на наличие необходимого/достаточного количества параметров
-    if len(argv[1:]) not in (2, 3,): raise Exception(
-        'Некорректное количество входных параметров: {}.\n'.format(argv[1:]) + \
+    if len(sys.argv[1:]) not in (2, 3,): raise Exception(
+        'Некорректное количество входных параметров: {}.\n'.format(sys.argv[1:]) + \
         'Обязательно наличие пути к образцу, пути к изображению.'
     )
     ### Проверка на корректность указаных путей
-    for arg in argv[1:3]:
+    for arg in sys.argv[1:3]:
         if not os.path.exists(arg): raise Exception(
         'Некорректный путь к файлу: {}.'.format(arg)
     )
     ### Проверка на корректность дампа словаря
-    if len(argv[1:]) == 3:
-        try: params = loads(argv[3])
+    if len(sys.argv[1:]) == 3:
+        try: params = loads(sys.argv[3])
         except Exception as exc: raise Exception(
-            'Некорректно задан конфигурационный словарь: {}.\n{}'.format(argv[3], exc)
+            'Некорректно задан конфигурационный словарь: {}.\n{}'.format(sys.argv[3], exc)
         )
     ### Если detect.py вызван корректно
     detector(
-        query_path=argv[1], 
-        train_path=argv[2], 
+        query_path=sys.argv[1], 
+        train_path=sys.argv[2], 
         ### Нет необходимости в коррекции параметров при первоначальном вызове
-        # **({"params": loads(argv[3].replace('\'', '"'))} if len(argv[1:]) == 3 else {})
+        # **({"params": loads(sys.argv[3].replace('\'', '"'))} if len(sys.argv[1:]) == 3 else {})
         logfile=True
     )
