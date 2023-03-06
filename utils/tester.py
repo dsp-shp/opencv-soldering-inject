@@ -35,6 +35,8 @@ class detectorTest(unittest.TestCase):
         self._('unit-detector_query.png', 'unit-detector-0_train.png', (131, 129, 435, 377, 0))
     def test_1(self) -> None:
         self._('unit-detector_query.png', 'unit-detector-1_train.png', (141, -39, 456, 194, -3))
+    def test_2(self) -> None:
+        self._('unit-detector_query.png', 'unit-detector-2_train.png', (895, 639, 591, 392, 180))
 
 ### Тестирование методов логирования
 class loggerTest(unittest.TestCase):
@@ -62,6 +64,9 @@ class loggerTest(unittest.TestCase):
 
         self.assertEqual(query and train, True)
 
+    def test_init(self) -> None: pass ### проверка logger.init(...)
+
+    def test_info(self) -> None: pass ### проверка logger.info(...)
     
 
 if __name__ == '__main__': unittest.main()
