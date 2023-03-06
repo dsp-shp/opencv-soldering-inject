@@ -5,11 +5,11 @@ from logger import logger
 from json import loads
 
 ### Дефолтные значения
-PARAMS={
-    "MIN_MATCHES":10,
-    "FLN_INDEX":{"algorithm":1, "trees":5},
-    "FLN_SEARCH":{"checks":50},
-    "HOMOGRAPHY":{"method":cv.RANSAC, "ransacReprojThreshold":5.0}
+PARAMS = {
+    "MIN_MATCHES": 10,
+    "FLN_INDEX": {"algorithm":1, "trees":5},
+    "FLN_SEARCH": {"checks":50},
+    "HOMOGRAPHY": {"method":cv.RANSAC, "ransacReprojThreshold":5.0}
 }
 
 @logger

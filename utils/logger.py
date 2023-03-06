@@ -1,10 +1,12 @@
 import os
 import shutil
-from sys import stdout
+import sys
 from datetime import datetime, timedelta
 
+HOME = os.path.join(sys.path[-1], 'inject_solder/') ### путь к корню модуля
+
 class logger(object):
-    
+
     def __init__(self, func) -> None: 
         self.func = func; self.retain()
 
@@ -12,7 +14,7 @@ class logger(object):
         return self.func(*args, **kwargs) if kwargs.get('log', None) \
             else self.init(self.func, *args, **kwargs)
 
-    def init(self, func, *args, logs:str='../logs/', attempt:int=1, **kwargs) -> None:
+    def init(self, func, *args, logs:str=os.path.join(HOME, 'logs/'), attempt:int=1, **kwargs) -> None:
         """ Инициализация системы логирования поверх выполняемого процесса
 
         >>> ... func ~ (callable) – выполняемая функция
@@ -25,13 +27,13 @@ class logger(object):
         
         ### Определение параметров логирования
         if kwargs.get('logfile', True) == True:
-            self.LOGS = os.path.abspath(logs + str(datetime.now().date()))
+            self.LOGS = os.path.join(logs, str(datetime.now().date()))
             os.makedirs(self.LOGS, exist_ok=True)
         logging.basicConfig(
             level=logging.INFO,
             format='%(message)s',
             **(
-                {"stream": stdout} if kwargs.get('logfile', True) == False else \
+                {"stream": sys.stdout} if kwargs.get('logfile', True) == False else \
                 {"filename": os.path.join(self.LOGS, '{}.log'.format(self.JOB))}
             )
         )
@@ -81,6 +83,7 @@ class logger(object):
 
     def transfer(self, path:str, type:str) -> str:
         """ Бэкапирование изображений в logs/ директорию
+        (вызывается только в случае логирования выполнения в файл)
         
         >>> ... path ~ (str) - путь к исходному файлу
         >>> ... type ~ (str) – тип изображения:
@@ -95,15 +98,14 @@ class logger(object):
         
         return dest
     
-    def retain(self, logs:str='../logs/', days:int=3) -> None:
+    def retain(self, days:int=3) -> None:
         """ Удаление неактуальных дневных партиций в logs/ директории
 
-        >>> ... logs ~ (str) – logs/ директория
-        >>> ... days ~ (int) – глубина сохранения
+        >>> ... days ~ (int) – глубина сохранения партиций
         >>> return (None)
         """
         
-        logs = os.path.abspath(logs)
+        logs = os.path.join(HOME, 'logs/')
         for x in os.listdir(logs):
             path = os.path.join(logs, x)
             if os.path.isdir(path) and x < str(datetime.now().date() - timedelta(days=days)):

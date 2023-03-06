@@ -76,7 +76,7 @@ class logger(object):
         ...
     def transfer(self, path:str, type:str) -> str: 
         ... ### фактически реализован как self.lambda
-    def retain(self, logs:str, days:int) -> None:
+    def retain(self, days:int=3) -> None:
         ...
 ```
 
