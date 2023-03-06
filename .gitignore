@@ -1,3 +1,4 @@
 logs/*
 !logs/README.md
 **/.DS_Store
+tests/autos/*

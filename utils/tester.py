@@ -4,11 +4,11 @@ from logger import logger, HOME
 from detector import detector, PARAMS
 
 ### Реализация системы логирования для тестирования
-class unit_logger: JOB, LOGS, process, info = None, None, lambda path, type: path, \
+class logger_: JOB, LOGS, process, info = None, None, lambda path, type: path, \
     lambda *args, **kwargs: None
 
-### Тестирование детекции
-class detectorTest(unittest.TestCase):
+### Unit-тестирование детекции
+class unit_detector(unittest.TestCase):
 
     def _(self, query_path:str, train_path:str, correct:tuple) -> None:
         """ Конструктор detector теста
@@ -20,11 +20,11 @@ class detectorTest(unittest.TestCase):
         """
         
         kwargs = {
-            "query_path":os.path.join(HOME, 'tests/', query_path),
-            "train_path":os.path.join(HOME, 'tests/', train_path), 
+            "query_path":os.path.join(HOME, 'tests/units', query_path),
+            "train_path":os.path.join(HOME, 'tests/units', train_path), 
             "params":PARAMS
         }
-        testing = *[round(x) for x in detector(**kwargs, log=unit_logger).values()],
+        testing = *[round(x) for x in detector(**kwargs, log=logger_).values()],
         self.assertEqual(
             testing,
             correct,
@@ -38,8 +38,8 @@ class detectorTest(unittest.TestCase):
     def test_2(self) -> None:
         self._('unit-detector_query.png', 'unit-detector-2_train.png', (895, 639, 591, 392, 180))
 
-### Тестирование методов логирования
-class loggerTest(unittest.TestCase):
+### Unit-тестирование методов логирования
+class unit_logger(unittest.TestCase):
 
     def test_retain(self) -> None: ### проверка logger.retain(...)
         
@@ -56,18 +56,29 @@ class loggerTest(unittest.TestCase):
 
         test_logger = logger(func=lambda: None); test_logger()
         ### Бэкапирование изображений
-        query_path = test_logger.transfer(path=os.path.join(HOME, 'tests/', 'unit-detector_query.png'), type='query')
-        train_path = test_logger.transfer(path=os.path.join(HOME, 'tests/', 'unit-detector-0_train.png'), type='train')
+        query_path = test_logger.transfer(
+            path=os.path.join(HOME, 'tests/units', 'unit-detector_query.png'), 
+            type='query'
+        )
+        train_path = test_logger.transfer(
+            path=os.path.join(HOME, 'tests/units', 'unit-detector-0_train.png'), 
+            type='train'
+        )
         ### Проверка и удаление бэкапов
         query, train = os.path.exists(query_path), os.path.exists(train_path)
         for path in (query_path, train_path, ): os.remove(path)
 
         self.assertEqual(query and train, True)
 
-    def test_init(self) -> None: pass ### проверка logger.init(...)
+    def test_init(self) -> None: pass ### TODO: проверка logger.init(...)
 
-    def test_info(self) -> None: pass ### проверка logger.info(...)
+    def test_info(self) -> None: pass ### TODO: проверка logger.info(...)
     
+### Auto-тестирование детекции
+class auto_detector:
+
+    def __init__(self): pass
+
 
 if __name__ == '__main__': unittest.main()
 

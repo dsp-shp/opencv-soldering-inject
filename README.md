@@ -16,13 +16,14 @@
 - Неоходимые библиотеки: 
   - ```opencv-contib-python``` – *https://pypi.org/project/opencv-contrib-python/*
   - ```matplotlib``` – *https://pypi.org/project/matplotlib/*
+  - ```pandas``` – *https://pypi.org/project/pandas/*
 
 ### Интеграция с C# кодом
 
 Прежде чем перейти к процессу интеграции необходимо последовательно установить все необходимые компоненты:
 1. установить ```python3```, если не предустановлен в системе;
 1. установить пакетный менеджер ```pip```;
-1. установить через ```pip``` необходимые библиотеки ~> ```pip3 install opencv-contrib-python matplotlib```;
+1. установить через ```pip``` необходимые библиотеки ~> ```pip3 install opencv-contrib-python matplotlib pandas```;
 1. установить ```git```, если не предустановлен в системе;
 1. склонировать этот репозиторий в ```site-packages``` *(```pip3 show matplotlib -> Location```)* ~> ```git clone git@github.com:dsp-shp/inject-solder.git```.
 
