@@ -10,6 +10,7 @@ PARAMS = {
     "MIN_MATCHES": 10,
     "FLN_INDEX": {"algorithm":1, "trees":5},
     "FLN_SEARCH": {"checks":50},
+    "LOWE_PASS": 0.7,
     "HOMOGRAPHY": {"method":cv.RANSAC, "ransacReprojThreshold":5.0}
 }
 
@@ -40,7 +41,7 @@ def detector(
 
     global PARAMS
 
-    MIN_MATCHES, FLN_INDEX, FLN_SEARCH, HOMOGRAPHY = {**PARAMS, **params}.values()
+    MIN_MATCHES, FLN_INDEX, FLN_SEARCH, LOWE_PASS, HOMOGRAPHY = {**PARAMS, **params}.values()
     log.info('Параметры детекции:\n"{}"', params)
 
     log.info('Обработка изображений:')
@@ -59,7 +60,7 @@ def detector(
     log.info('Мэтчер инициализирован: {}', matcher.__class__)
     matches = matcher.knnMatch(query_des, train_des, k=2)
     ### Определение подходящих мэтчей по проверке Lowe
-    good_matches = [m for m, n in matches if m.distance < 0.7 * n.distance]
+    good_matches = [m for m, n in matches if ((m.distance < LOWE_PASS * n.distance) if LOWE_PASS > 0 else True)]
     log.info('Результаты мэтчинга: до очистки ({}), после очистки ({})', len(matches), len(good_matches))
 
     if len(good_matches) < MIN_MATCHES: raise Exception(

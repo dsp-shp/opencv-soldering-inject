@@ -37,6 +37,8 @@ class unit_detector(unittest.TestCase):
         self._('unit-detector_query.png', 'unit-detector-1_train.png', (141, -39, 456, 194, -3))
     def test_2(self) -> None:
         self._('unit-detector_query.png', 'unit-detector-2_train.png', (895, 639, 591, 392, 180))
+    def test_3(self) -> None:
+        self._('unit-detector_query.png', 'unit-detector-3_train.png', (885, 804, 569, 572, 177))
 
 ### Unit-тестирование методов логирования
 class unit_logger(unittest.TestCase):
@@ -78,7 +80,16 @@ class unit_logger(unittest.TestCase):
 class auto_detector:
 
     def __init__(self): pass
+    
+    ### (highlighted, standard)
+    ### angle: (0 - 45)
+    ### image size: (% of image zone)
 
+
+### Зоны:
+### (0 <= x <= 165) & (0 <= y <= 85)
+### (0 <= x <= 430) & (0 <= y <= 40)
+### (0 <= x <= 115) & (520 <= y <= 597)
 
 if __name__ == '__main__': unittest.main()
 
