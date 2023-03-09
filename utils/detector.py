@@ -67,9 +67,18 @@ def detector(
     good_matches = [m for m, n in matches if ((m.distance < LOWE_PASS * n.distance) if LOWE_PASS > 0 else True)]
     log.info('Результаты мэтчинга: до очистки ({}), после очистки ({})', len(matches), len(good_matches))
 
-    if len(good_matches) < MIN_MATCHES: raise Exception(
-        'Недостаточно совпадений найдено - {}/{}'.format(len(good_matches), MIN_MATCHES)
-    )
+    shifts = {
+        'extra': {
+            'query_keys': len(query_key),
+            'train_keys': len(train_key),
+            'matches': len(matches),
+            'good_matches': len(good_matches),
+        }        
+    }
+
+    if len(good_matches) < MIN_MATCHES: 
+        log.info('Недостаточно совпадений найдено - {}/{}'.format(len(good_matches), MIN_MATCHES))
+        return shifts
 
     ### Гомография
     M, mask = cv.findHomography(
@@ -104,13 +113,14 @@ def detector(
         'y1': round(train_pts[0][0][1], 3),
         'x2': round(train_pts[2][0][0], 3),
         'y2': round(train_pts[2][0][1], 3),
-        'r': angle
+        'r': angle,
+        **shifts
     }
     log.info('Определение параметров смещения (положительно при повороте по часовой):\n"{}"', shifts,)
 
     ### Вывод итогового результата
-    if log.JOB: print([*shifts.values()])
-    log.info('Вывод результата в STDOUT: "{}"', *([*shifts.values()],))
+    if log.JOB: print([*shifts.values()][:-1])
+    log.info('Вывод результата в STDOUT: "{}"', *([*shifts.values()][:-1],))
 
     ### Отрисовка мэтчей
     final_img = cv.drawMatches(
@@ -127,12 +137,12 @@ def detector(
             "flags":2
         }
     )
-    plt.imshow(final_img, 'gray'), plt.axis('off')
 
-    ### Отрисовка результата
-    reslt_path = None if not log.LOGS else os.path.join(log.LOGS, log.JOB+'_reslt.png')
-    log.info('Отрисовка результата' + ('' if not reslt_path else ':\n"{}"'.format(reslt_path)))
-    if log.JOB: plt.show() if not log.LOGS else plt.savefig(reslt_path, bbox_inches='tight')
+    if log.JOB: ### отрисовка результата
+        plt.imshow(final_img, 'gray'), plt.axis('off')
+        reslt_path = None if not log.LOGS else os.path.join(log.LOGS, log.JOB+'_reslt.png')
+        log.info('Отрисовка результата' + ('' if not reslt_path else ':\n"{}"'.format(reslt_path)))
+        plt.show() if not log.LOGS else plt.savefig(reslt_path, bbox_inches='tight')
 
     return shifts
 

@@ -133,8 +133,10 @@ def auto_detector(...):
             ...
             for angle in angles: ### для каждого угла поворота
                 ...
-                data.append(get_cords(...))
-    
+                for angle in angles: ### для каждой попытки
+                    ...
+                    data.append(get_cords(...))
+
     ### Сохранить результат
     pd.DataFrame(data).to_csv(path_or_buf='.../logs/tester.auto_detector.tsv', sep='\t')
 ```
@@ -145,9 +147,9 @@ python3 -c "from inject_solder.utils import *; auto_detector()"
 ```
 И возвращает ```.tsv``` файл, сохраняемый в ```logs/``` директорию. Файл представляет из себя некоторый набор параметров, используемых при тестировании, предполагаемый и получаемый результаты детекции:
 
-|img_name|img_size|img_rot_size|img_is_highlighted|obj_scale|obj_size|obj_cords|obj_angle|pre_cords|det_angle|det_cords|
-|---|---|---|---|---|---|---|---|---|---|---|
-|image.jpg|665x512|775x668|FALSE|25|166x128|(...)|-15|(...)|15.1|(...)|
+|img_name|img_size|img_rot_size|img_is_highlighted|obj_scale|obj_size|obj_cords|obj_angle|obj_attem|pre_cords|det_angle|det_cords|det_query_keys|det_train_keys|det_matches|det_good_matches|
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+|image.jpg|665x512|775x668|FALSE|25|166x128|(...)|-15|1|(...)|15.1|(...)|50|100|50|25|---|
 
 Атрибуты файла имеют следующий смысл:
 - ```img_name``` - наименование исходного изображения
@@ -158,6 +160,11 @@ python3 -c "from inject_solder.utils import *; auto_detector()"
 - ```obj_size``` - размер фрагмента
 - ```obj_cords``` - координаты фрагмента на исходном изображении (без поворота последнего)
 - ```obj_angle``` - угол поворота изображения
+- ```obj_attem``` - случайное изображение (номер попытки)
 - ```pre_cords``` - предполагаемый результат детекции (x1, y1, x2, y2)
 - ```det_angle``` - получаемый детекцией угол
 - ```det_cords``` - получаемый результат детекции (x1, y1, x2, y2)
+- ```det_query_keys``` - количество ключевых точек фрагмента
+- ```det_train_keys``` - количество ключевых точек изображения
+- ```det_matches``` - количество мэтчей
+- ```det_good_matches``` - количество мэтчей, соответствующих критерию Lowe

@@ -1,5 +1,6 @@
 import os
 import unittest
+import sys
 try: from .detector import detector, PARAMS; from .logger import logger, HOME ### поддержка python3 -c "tester(...)"
 except: from detector import detector, PARAMS; from logger import logger, HOME ### поддержка python3 tester.py ...
 
@@ -77,7 +78,15 @@ class unit_logger(unittest.TestCase):
     def test_info(self) -> None: pass ### TODO: проверка logger.info(...)
     
 ### Auto-тестирование детекции
-def auto_detector(scales=range(25, 51, 5), angles=range(0, 46, 15)):
+def auto_detector(scales=range(25, 51, 5), angles=range(0, 46, 15), attempts=range(1, 6, 1)) -> None:
+    """ Авто-тестирование детекции
+
+    >>> ... scales ~ (range) - диапазон допустимых масштабов фрагмента
+    >>> ... angles ~ (range) - диапазон допустимых углов поворота
+    >>> ... attempts ~ (range) – диапазон количества попыток
+    >>> return (None) – сохраняет результат работы в файл logs/tester.auto_detector.tsv
+    """
+
     try: import pandas as pd; from PIL import Image
     except: pass
 
@@ -86,6 +95,7 @@ def auto_detector(scales=range(25, 51, 5), angles=range(0, 46, 15)):
         
         >>> return (list) - данные об одной итерации тестирования
         """
+
         import math
         from random import randrange
 
@@ -114,13 +124,20 @@ def auto_detector(scales=range(25, 51, 5), angles=range(0, 46, 15)):
             train_img.size[1] - (obj_x1 * math.sin(angle_rad) + (img.size[1] - obj_y1) * math.cos(angle_rad)),
         ))
         ### Получаемый результат
-        try: det_cords = (*detector(**kwargs, query_img=query_img, train_img=train_img).values(),)
-        except Exception as e: det_cords = None
-        finally: return [
-            file, img.size, train_img.size, img_light, ### параметры изображения,
-            scale, obj_size, obj_cords, angle, pre_cords, ### ... фрагмента,
-            *((det_cords[-1], det_cords[:-1],) if det_cords else (None, None,)) ### результаты детекции
-        ]
+        try: 
+            det_cords = detector(**kwargs, query_img=query_img, train_img=train_img)
+            det_cords, det_extra = (*det_cords.values(),), det_cords.get('extra', {})
+            det_cords = det_cords[:-1] if det_extra else det_cords
+            det_extra = det_extra.values() if det_extra else (None,)*4
+        except Exception as e:
+            det_cords = None
+        finally: 
+            return [
+                file, img.size, train_img.size, img_light, ### параметры изображения,
+                scale, obj_size, obj_cords, angle, attempt, pre_cords, ### ... фрагмента,
+                *((det_cords[-1], det_cords[:-1],) if det_cords else (None, None,)), ### результаты детекции
+                *det_extra ### экстра
+            ]
 
     data = []
     files = [x for x in os.listdir(os.path.join(HOME, 'tests', 'autos')) if '.scans.' in x]
@@ -131,14 +148,17 @@ def auto_detector(scales=range(25, 51, 5), angles=range(0, 46, 15)):
         for scale in scales:
             obj_size = tuple(int(x * scale / 100.0) for x in img.size)
             img_margins = tuple(img.size[x] - obj_size[x] for x in (0, 1,))
-            for angle in angles: data.append(get_cords())
+            for angle in angles: 
+                for attempt in attempts:
+                    data.append(get_cords())
     
     ### Сохранить результат
     pd.DataFrame(
         data=data, columns=[
             'img_name', 'img_size', 'img_rot_size', 'img_is_highlighted', ### параметры изображения,
-            'obj_scale', 'obj_size', 'obj_cords', 'obj_angle', 'pre_cords', ### ... фрагмента,
-            'det_angle', 'det_cords' ### результаты детекции
+            'obj_scale', 'obj_size', 'obj_cords', 'obj_angle', 'obj_attem', 'pre_cords', ### ... фрагмента,
+            'det_angle', 'det_cords', ### результаты детекции
+            'det_query_keys', 'det_train_keys', 'det_matches', 'det_good_matches' ### экстра
         ]
     ).to_csv(path_or_buf=os.path.join(HOME, 'logs', 'tester.auto_detector.tsv'), sep='\t', index=False)
 
