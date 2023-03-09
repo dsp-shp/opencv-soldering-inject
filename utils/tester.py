@@ -134,7 +134,7 @@ def auto_detector(scales=range(25, 51, 5), angles=range(0, 46, 15), attempts=ran
         finally: 
             return [
                 file, img.size, train_img.size, img_light, ### параметры изображения,
-                scale, obj_size, obj_cords, angle, attempt, pre_cords, ### ... фрагмента,
+                scale, obj_size, obj_cords, -angle, attempt, pre_cords, ### ... фрагмента,
                 *((det_cords[-1], det_cords[:-1],) if det_cords else (None, None,)), ### результаты детекции
                 *det_extra ### экстра
             ]
