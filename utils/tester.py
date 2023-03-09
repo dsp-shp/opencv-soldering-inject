@@ -1,7 +1,7 @@
 import os
 import unittest
-from detector import detector, PARAMS
-from logger import logger, HOME
+try: from .detector import detector, PARAMS; from .logger import logger, HOME ### поддержка python3 -c "tester(...)"
+except: from detector import detector, PARAMS; from logger import logger, HOME ### поддержка python3 tester.py ...
 
 ### Реализация системы логирования для тестирования
 class logger_: JOB, LOGS, process, info = None, None, lambda path, type: path, \
@@ -77,19 +77,71 @@ class unit_logger(unittest.TestCase):
     def test_info(self) -> None: pass ### TODO: проверка logger.info(...)
     
 ### Auto-тестирование детекции
-class auto_detector:
+def auto_detector(scales=range(25, 51, 5), angles=range(0, 46, 15)):
+    import pandas as pd
+    from PIL import Image
 
-    def __init__(self): pass
+    def get_cords() -> list:
+        """ Рассчет ожидаемых и получение определяемых значений смещения и поворота
+        
+        >>> return (list) - данные об одной итерации тестирования
+        """
+        import math
+        from random import randrange
+
+        kwargs = {"query_path":None, "train_path":None, "params":PARAMS, "log":logger_}
+
+        ### Подготовка фрагмента
+        obj_x = randrange(0, img_margins[0])
+        obj_y = randrange(0, img_margins[1] - 80) if obj_x <= 115 \
+            else randrange(0, img_margins[1])
+        obj_cords = (
+            (obj_x, obj_y), 
+            (obj_x, obj_y + obj_size[1]), 
+            (obj_x + obj_size[0], obj_y + obj_size[1]), 
+            (obj_x + obj_size[0], obj_y)
+        )
+        query_img = img.crop((obj_cords[1][0], obj_cords[0][1], obj_cords[3][0], obj_cords[2][1]))
+        ### Подготовка изображения
+        train_img = img.rotate(angle, Image.NEAREST, expand=1)
+        
+        ### Ожидаемый результат
+        angle_rad, obj_x1, obj_y1 = angle * math.pi / 180, obj_x + obj_size[0], obj_y + obj_size[1]
+        pre_cords = tuple(round(x, 3) for x in (
+            obj_x * math.cos(angle_rad) + obj_y * math.sin(angle_rad), 
+            train_img.size[1] - (obj_x * math.sin(angle_rad) + (img.size[1] - obj_y) * math.cos(angle_rad)),
+            obj_x1 * math.cos(angle_rad) + obj_y1 * math.sin(angle_rad), 
+            train_img.size[1] - (obj_x1 * math.sin(angle_rad) + (img.size[1] - obj_y1) * math.cos(angle_rad)),
+        ))
+        ### Получаемый результат
+        try: det_cords = (*detector(**kwargs, query_img=query_img, train_img=train_img).values(),)
+        except Exception as e: det_cords = None
+        finally: return [
+            file, img.size, train_img.size, img_light, ### параметры изображения,
+            scale, obj_size, obj_cords, angle, pre_cords, ### ... фрагмента,
+            *((det_cords[-1], det_cords[:-1],) if det_cords else (None, None,)) ### результаты детекции
+        ]
+
+    data = []
+    files = [x for x in os.listdir(os.path.join(HOME, 'tests', 'autos')) if '.scans.' in x]
     
-    ### (highlighted, standard)
-    ### angle: (0 - 45)
-    ### image size: (% of image zone)
+    for file in files[:5]:
+        img_light = False if file.startswith('std.') else True
+        img = Image.open(os.path.join(HOME, 'tests', 'autos', file))
+        for scale in scales:
+            obj_size = tuple(int(x * scale / 100.0) for x in img.size)
+            img_margins = tuple(img.size[x] - obj_size[x] for x in (0, 1,))
+            for angle in angles: data.append(get_cords())
+    
+    ### Сохранить результат
+    pd.DataFrame(
+        data=data, columns=[
+            'img_name', 'img_size', 'img_rot_size', 'img_is_highlighted', ### параметры изображения,
+            'obj_scale', 'obj_size', 'obj_cords', 'obj_angle', 'pre_cords', ### ... фрагмента,
+            'det_angle', 'det_cords' ### результаты детекции
+        ]
+    ).to_csv(path_or_buf=os.path.join(HOME, 'logs', 'tester.auto_detector.tsv'), sep='\t', index=False)
 
-
-### Зоны:
-### (0 <= x <= 165) & (0 <= y <= 85)
-### (0 <= x <= 430) & (0 <= y <= 40)
-### (0 <= x <= 115) & (520 <= y <= 597)
 
 if __name__ == '__main__': unittest.main()
 

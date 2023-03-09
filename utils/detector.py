@@ -42,11 +42,15 @@ def detector(
     global PARAMS
 
     MIN_MATCHES, FLN_INDEX, FLN_SEARCH, LOWE_PASS, HOMOGRAPHY = {**PARAMS, **params}.values()
-    log.info('Параметры детекции:\n"{}"', params)
+    log.info('Параметры детекции:\n"{}"', {**PARAMS, **params})
 
     log.info('Обработка изображений:')
-    query_img = cv.imread(log.process(query_path, 'query'), cv.IMREAD_GRAYSCALE) ### фрагмент
-    train_img = cv.imread(log.process(train_path, 'train'), cv.IMREAD_GRAYSCALE) ### изображение
+    if kwargs.get('query_img', None) and kwargs.get('train_img', None): ### уже прочитанные изображения
+        query_img = cv.cvtColor(np.array(kwargs.get('query_img')), cv.IMREAD_GRAYSCALE)
+        train_img = cv.cvtColor(np.array(kwargs.get('train_img')), cv.IMREAD_GRAYSCALE)
+    else:
+        query_img = cv.imread(log.process(query_path, 'query'), cv.IMREAD_GRAYSCALE) ### фрагмент
+        train_img = cv.imread(log.process(train_path, 'train'), cv.IMREAD_GRAYSCALE) ### изображение
     log.info('Изображения прочитаны')
     
     detector = cv.SIFT_create() ### инициализация детектора
@@ -77,7 +81,7 @@ def detector(
     log.info('Поиск гомографии:\n{}', M)
 
     ### Определение крайних точек объекта
-    h, w = query_img.shape
+    h, w = query_img.shape[:2]
     query_pts=np.float32([[0,0], [0,h-1], [w-1,h-1], [w-1,0]]).reshape(-1,1,2)
     train_pts = cv.perspectiveTransform(src=query_pts, m=M)
     train_img = cv.polylines( ### выделение объекта на изображении
