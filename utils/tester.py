@@ -23,9 +23,10 @@ class unit_detector(unittest.TestCase):
         kwargs = {
             "query_path":os.path.join(HOME, 'tests/units', query_path),
             "train_path":os.path.join(HOME, 'tests/units', train_path), 
-            "params":PARAMS
+            "params":PARAMS,
+            "log":logger_
         }
-        testing = *[round(x) for x in detector(**kwargs, log=logger_).values()],
+        testing = *[round(x) for x in (*detector(**kwargs).values(),)[:-1]],
         self.assertEqual(
             testing,
             correct,
@@ -125,9 +126,8 @@ def auto_detector(scales=range(25, 51, 5), angles=range(0, 46, 15), attempts=ran
         ))
         ### Получаемый результат
         try: 
-            det_cords = detector(**kwargs, query_img=query_img, train_img=train_img)
-            det_cords, det_extra = (*det_cords.values(),), det_cords.get('extra', {})
-            det_cords = det_cords[:-1] if det_extra else det_cords
+            det_cords = (*detector(**kwargs, query_img=query_img, train_img=train_img).values(),)
+            det_cords, det_extra = det_cords[:-1], det_cords[-1]
             det_extra = det_extra.values() if det_extra else (None,)*4
         except Exception as e:
             det_cords = None
