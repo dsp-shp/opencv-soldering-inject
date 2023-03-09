@@ -7,7 +7,7 @@ except: from logger import logger ### поддержка python3 detector.py ...
 
 ### Дефолтные значения
 PARAMS = {
-    "MIN_MATCHES": 10,
+    "MIN_MATCHES": 15,
     "FLN_INDEX": {"algorithm":1, "trees":5},
     "FLN_SEARCH": {"checks":50},
     "LOWE_PASS": 0.7,
@@ -67,6 +67,7 @@ def detector(
     good_matches = [m for m, n in matches if ((m.distance < LOWE_PASS * n.distance) if LOWE_PASS > 0 else True)]
     log.info('Результаты мэтчинга: до очистки ({}), после очистки ({})', len(matches), len(good_matches))
 
+    ###
     shifts = {
         'extra': {
             'query_keys': len(query_key),
@@ -75,9 +76,9 @@ def detector(
             'good_matches': len(good_matches),
         }        
     }
-
-    if len(good_matches) < MIN_MATCHES: 
-        log.info('Недостаточно совпадений найдено - {}/{}'.format(len(good_matches), MIN_MATCHES))
+    if len(good_matches) < MIN_MATCHES:
+        if log.JOB: print([*shifts.values()][:-1])
+        log.info('Фрагмент не обнаружен')
         return shifts
 
     ### Гомография

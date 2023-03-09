@@ -118,7 +118,7 @@ python3 tester.py
 
 Автотестирование реализуется при помощи функции ```auto_detector(...)``` и набора подготовленных данных, помещаемых в ```/tests/autos```. 
 ```python
-def auto_detector(...):
+def auto_detector(...) -> None:
     import pandas as pd
     from PIL import Image
 
@@ -127,18 +127,20 @@ def auto_detector(...):
 
     data = [] ### итоговые данные
     
-    for file in files: ### для каждого файла
+    for light in (0, 1,): ### для каждого типа (с, без подсветки)
         ...
-        for scale in scales: ### для каждого случайного фрагмента
+        for file in files: ### для каждого файла
             ...
-            for angle in angles: ### для каждого угла поворота
+            for scale in scales: ### для каждого случайного фрагмента
                 ...
-                for angle in angles: ### для каждой попытки
+                for angle in angles: ### для каждого угла поворота
                     ...
-                    data.append(get_cords(...))
+                    for angle in angles: ### для каждой попытки
+                        ...
+                        data += [get_cords(...), get_cords(...)]
 
     ### Сохранить результат
-    pd.DataFrame(data).to_csv(path_or_buf='.../logs/tester.auto_detector.tsv', sep='\t')
+    pd.DataFrame(data).to_csv(path_or_buf='.../logs/tester.auto_detector.tsv', sep='\t', ...)
 ```
 
 Тестирование вызывается скриптом:
