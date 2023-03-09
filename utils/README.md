@@ -149,14 +149,15 @@ python3 -c "from inject_solder.utils import *; auto_detector()"
 ```
 И возвращает ```.tsv``` файл, сохраняемый в ```logs/``` директорию. Файл представляет из себя некоторый набор параметров, используемых при тестировании, предполагаемый и получаемый результаты детекции:
 
-|img_name|img_size|img_rot_size|img_is_highlighted|obj_scale|obj_size|obj_cords|obj_angle|obj_attem|pre_cords|det_angle|det_cords|det_query_keys|det_train_keys|det_matches|det_good_matches|
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-|image.jpg|665x512|775x668|FALSE|25|166x128|(...)|-15|1|(...)|15.1|(...)|50|100|50|25|---|
+|img_name|img_size|img_rot_size|img_contains|img_is_highlighted|obj_scale|obj_size|obj_cords|obj_angle|obj_attem|pre_cords|det_angle|det_cords|det_query_keys|det_train_keys|det_matches|det_good_matches|
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+|image.jpg|665x512|775x668|TRUE|FALSE|25|166x128|(...)|-15|1|(...)|15.1|(...)|50|100|50|25|---|
 
 Атрибуты файла имеют следующий смысл:
 - ```img_name``` - наименование исходного изображения
 - ```img_size``` - размер исходного изображения
 - ```img_rot_size``` - размер изображения после поворота на некоторый угол
+- ```img_contains``` - содержит ли изображение определяемый фрагмент
 - ```img_is_highlighted``` - флаг подсветки исходного изображения (определяется по названию)
 - ```obj_scale``` - масштаб фрагмента (выбирается произвольно в диапазоне от 25 до 50)
 - ```obj_size``` - размер фрагмента
