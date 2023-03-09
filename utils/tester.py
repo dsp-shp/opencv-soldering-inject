@@ -78,8 +78,8 @@ class unit_logger(unittest.TestCase):
     
 ### Auto-тестирование детекции
 def auto_detector(scales=range(25, 51, 5), angles=range(0, 46, 15)):
-    import pandas as pd
-    from PIL import Image
+    try: import pandas as pd; from PIL import Image
+    except: pass
 
     def get_cords() -> list:
         """ Рассчет ожидаемых и получение определяемых значений смещения и поворота
