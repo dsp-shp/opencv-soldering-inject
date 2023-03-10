@@ -78,34 +78,89 @@ class unit_logger(unittest.TestCase):
 
     def test_info(self) -> None: pass ### TODO: проверка logger.info(...)
     
+
 ### Auto-тестирование детекции
-def auto_detector(
-        scales=range(25, 51, 1),
-        angles=range(0, 46, 1),
-        attempts=range(1, 6, 1)
-    ) -> None:
-    """ Авто-тестирование детекции
+class auto_detector:
 
-    >>> ... scales ~ (range) - диапазон допустимых масштабов фрагмента
-    >>> ... angles ~ (range) - диапазон допустимых углов поворота
-    >>> ... attempts ~ (range) – диапазон количества попыток
-    >>> return (pd.core.frame.DataFrame) – сохраняет результат работы... 
-            в файл logs/tester.auto_detector.tsv
-    """
+    def __call__(
+            self,
+            path:str=os.path.join(HOME, 'logs'),
+            file:str='tester.auto_detector.tsv'
+        ) -> None:
 
-    from random import randrange, choice
-    try: import pandas as pd; from PIL import Image
-    except: pass
+        from multiprocessing import cpu_count
+        from concurrent.futures import ProcessPoolExecutor
+        try: import pandas as pd
+        except: pass
 
-    def get_cords(query_img:Image, train_img:Image, img_contn:bool) -> list:
-        """ Рассчет ожидаемых и получение определяемых значений смещения и поворота
+        data = []
+        with ProcessPoolExecutor(cpu_count() - 1) as executor:
+            for i in executor.map(self.compute, self.generate()): data += i
         
+        pd.DataFrame(data).to_csv(path_or_buf=os.path.join(path, file), sep='\t', index=False)
+
+    def generate(
+            self,
+            lights:range=(0, 1,),
+            scales:range=range(25, 51, 5),
+            angles:range=range(0, 46, 15),
+            attempts:range=range(1, 4, 1)
+    ) -> tuple:
+        """ Генерация набора параметров для р
+
+        >>> ... lights ~ (range) – 
+        >>> ... lights ~ (range) – 
+        >>> ... lights ~ (range) – 
+        >>> ... lights ~ (range) – 
+        >>> yield (tuple) – 
+        """
+
+        for light in lights:
+            files = (*filter(lambda x: '{}.scans.'.format(light) in x, 
+                os.listdir(os.path.join(HOME, 'tests', 'autos'))
+            ),)
+            for file in files[:1]:
+                for scale in scales:
+                    for angle in angles:
+                        for attempt in attempts:
+                            yield (light, files, file, scale, angle, attempt,)
+
+    def compute(
+            self,
+            params:tuple,
+            alt_path:str=None,
+        ) -> list:
+        """ Рассчет ожидаемых и получение определяемых значений смещения и поворота
+
+        >>> ... params ~ (tuple) – кортеж, содержащий параметры детекции
         >>> return (list) - данные об одной итерации тестирования
         """
 
         import math
+        from random import randrange, choice
+        try: from PIL import Image
+        except: pass
 
-        kwargs = {"query_path":None, "train_path":None, "params":PARAMS, "log":logger_}
+        light, files, file, scale, angle, attempt = params
+
+        ### Определение возможных координат в исходных данных
+        poses = [tuple(int(y) for y in x.split('.')[-2][1:-1].split(',')) for x in files]
+        pos_x, pos_y = sorted([*set([x[0] for x in poses])]), sorted([*set([y[1] for y in poses])])
+
+        img_path = os.path.join(HOME, 'tests', 'autos', file) 
+        query_img, train_img = Image.open(img_path if not alt_path else alt_path), Image.open(img_path)
+        
+        if not alt_path:
+            ### Поиск отличного от выбранного (img) изображения для выборки инородного фрагмента
+            file_cords = file.split('.')[-2][1:-1].split(',')
+            path = img_path.replace(','.join(file_cords), ','.join(
+                [str(x[(int(file_cords[i]) + len(x) // 2) % (len(x) - 1)]) for i, x in enumerate((pos_x, pos_y,))]
+            ))
+            if not os.path.exists(path):
+                path = img_path.replace(file, choice((*{*files}.difference({file}),)))
+
+        obj_size = tuple(int(x * scale / 100.0) for x in train_img.size)
+        img_margins = tuple(train_img.size[x] - obj_size[x] for x in (0, 1,))
 
         ### Подготовка фрагмента
         obj_x = randrange(0, img_margins[0])
@@ -117,6 +172,7 @@ def auto_detector(
             (obj_x + obj_size[0], obj_y + obj_size[1]), 
             (obj_x + obj_size[0], obj_y)
         )
+
         query_img = query_img.crop((obj_cords[1][0], obj_cords[0][1], obj_cords[3][0], obj_cords[2][1]))
         ### Подготовка изображения
         train_img = train_img.rotate(angle, Image.NEAREST, expand=1)
@@ -125,65 +181,43 @@ def auto_detector(
         angle_rad, obj_x1, obj_y1 = angle * math.pi / 180, obj_x + obj_size[0], obj_y + obj_size[1]
         pre_cords = tuple(round(x, 3) for x in (
             obj_x * math.cos(angle_rad) + obj_y * math.sin(angle_rad),  ### левый верхний угол
-            train_img.size[1] - (obj_x * math.sin(angle_rad) + (img.size[1] - obj_y) * math.cos(angle_rad)),
+            train_img.size[1] - (obj_x * math.sin(angle_rad) + (train_img.size[1] - obj_y) * math.cos(angle_rad)),
             obj_x1 * math.cos(angle_rad) + obj_y1 * math.sin(angle_rad), ### правый нижний угол
-            train_img.size[1] - (obj_x1 * math.sin(angle_rad) + (img.size[1] - obj_y1) * math.cos(angle_rad)),
+            train_img.size[1] - (obj_x1 * math.sin(angle_rad) + (train_img.size[1] - obj_y1) * math.cos(angle_rad)),
         ))
+
         ### Получаемый результат
-        try: 
-            det_cords = (*detector(**kwargs, query_img=query_img, train_img=train_img).values(),)
-            det_cords, det_extra = det_cords[:-1], det_cords[-1].values() if det_cords[-1] else (None,)*4
+        try:
+            det_kwargs = {"query_path":None, "train_path":None, "params":PARAMS, "log":logger_}
+            det_cords = (*detector(**det_kwargs, query_img=query_img, train_img=train_img).values(),)
         except Exception as e:
             det_cords = None
-        finally: 
-            return [
-                file, img.size, train_img.size, img_contn, bool(light), ### параметры изображения,
-                scale, obj_size, obj_cords, -angle, attempt, pre_cords, ### ... фрагмента,
-                *((det_cords[-1], det_cords[:-1],) if det_cords else (None, None,)), ### результаты детекции
-                *det_extra ### экстра
-            ]
-
-    data = []
-    
-    for light in (0, 1,):
-        files = (*filter(lambda x: '{}.scans.'.format(light) in x, 
-            os.listdir(os.path.join(HOME, 'tests', 'autos'))
-        ),)
-        
-        ### Определение возможных координат в исходных данных
-        poses = [tuple(int(y) for y in x.split('.')[-2][1:-1].split(',')) for x in files]
-        pos_x, pos_y = sorted([*set([x[0] for x in poses])]), sorted([*set([y[1] for y in poses])])
-
-        for file in files[:5]:
-            img_path = os.path.join(HOME, 'tests', 'autos', file); img = Image.open(img_path)
-            
-            ### Поиск отличного от выбранного (img) изображения для выборки инородного фрагмента
-            file_cords = file.split('.')[-2][1:-1].split(',')
-            try: noimg = Image.open(img_path.replace(','.join(file_cords), ','.join(
-                map(lambda i, x: str(x[(int(file_cords[i]) + len(x) // 2) % (len(x) - 1)]), 
-                enumerate((pos_x, pos_y,)))
-            )))
-            except: noimg = Image.open(img_path.replace(file, choice((*{*files}.difference({file}),))))
-
-            for scale in scales:
-                obj_size = tuple(int(x * scale / 100.0) for x in img.size)
-                img_margins = tuple(img.size[x] - obj_size[x] for x in (0, 1,))
-
-                for angle in angles:
-                    for attempt in attempts:
-                        data += [get_cords(img, img, True), get_cords(noimg, img, False)]
-    
-    ### Сохранить результат
-    pd.DataFrame(data=data, columns=[
-        'img_name', 'img_size', 'img_rot_size', 'img_contains', 'img_is_highlighted', ### параметры изображения,
-        'obj_scale', 'obj_size', 'obj_cords', 'obj_angle', 'obj_attem', 'pre_cords', ### ... фрагмента,
-        'det_angle', 'det_cords', ### результаты детекции
-        'det_query_keys', 'det_train_keys', 'det_matches', 'det_good_matches' ### экстра   
-    ]).to_csv(
-        path_or_buf=os.path.join(HOME, 'logs', 'tester.auto_detector.tsv'),
-        sep='\t',
-        index=False
-    )
+        finally:
+            det_extra = (*det_cords[-1].values(),) if det_cords[-1] else (None,)*4
+            det_cords = det_cords[:-1] if det_cords else None
+            return [{
+                ### параметры изображения,
+                "img_name": file, 
+                "img_size": train_img.size,
+                "img_rot_size": train_img.size, 
+                "img_contains": True if not alt_path else False,
+                "img_is_highlighted": bool(light),
+                ### ... фрагмента,
+                "obj_scale": scale,
+                "obj_size": obj_size,
+                "obj_cords": obj_cords, 
+                "obj_angle": -angle,
+                "obj_attem": attempt, 
+                "pre_cords": pre_cords, 
+                ### результаты детекции
+                "det_angle": det_cords[-1] if det_cords else None,
+                "det_cords": det_cords[:-1] if det_cords else None,
+                ### экстра
+                "det_query_keys": det_extra[0],
+                "det_train_keys": det_extra[1],
+                "det_matches": det_extra[2],
+                "det_good_matches": det_extra[3], 
+            }] + (self.compute(params, alt_path=path) if not alt_path else [])
 
 
 if __name__ == '__main__': unittest.main()

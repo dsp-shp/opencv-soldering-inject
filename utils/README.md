@@ -116,36 +116,32 @@ python3 tester.py
 ```
 <br>
 
-Автотестирование реализуется при помощи функции ```auto_detector(...)``` и набора подготовленных данных, помещаемых в ```/tests/autos```. 
+Автотестирование реализуется при помощи методов класса ```auto_detector``` и набора подготовленных данных, помещаемых в ```/tests/autos```. 
 ```python
-def auto_detector(...) -> None:
-    import pandas as pd
-    from PIL import Image
+### Auto-тестирование детекции
+class auto_detector:
+    
+    def __call__(self, ...) -> None: 
+        data = ... ### получение данных при помощи generate() и compute()
+        ### Сохранить результат
+        pd.DataFrame(data).to_csv(path_or_buf='.../logs/tester.auto_detector.tsv', sep='\t', ...)
+
+    ### Генерация возможных сценариев
+    def generate(self, ...) -> tuple: 
+        for light in (0, 1,): ### для каждого типа (с, без подсветки)
+            for file in files: ### для каждого файла
+                for scale in scales: ### для каждого случайного фрагмента
+                    for angle in angles: ### для каждого угла поворота
+                        for angle in angles: ### для каждой попытки
+                            yield (...)
 
     ### Расчет координат, вызов детекции
-    def get_cords(...) -> list: ... return [...]
-
-    data = [] ### итоговые данные
-    
-    for light in (0, 1,): ### для каждого типа (с, без подсветки)
-        ...
-        for file in files: ### для каждого файла
-            ...
-            for scale in scales: ### для каждого случайного фрагмента
-                ...
-                for angle in angles: ### для каждого угла поворота
-                    ...
-                    for angle in angles: ### для каждой попытки
-                        ...
-                        data += [get_cords(...), get_cords(...)]
-
-    ### Сохранить результат
-    pd.DataFrame(data).to_csv(path_or_buf='.../logs/tester.auto_detector.tsv', sep='\t', ...)
+    def compute(self, ...) -> list: ... return [...]
 ```
 
 Тестирование вызывается скриптом:
 ```python
-python3 -c "from inject_solder.utils import *; auto_detector()"
+python3 -c "from inject_solder.utils import *; auto_detector()()"
 ```
 И возвращает ```.tsv``` файл, сохраняемый в ```logs/``` директорию. Файл представляет из себя некоторый набор параметров, используемых при тестировании, предполагаемый и получаемый результаты детекции:
 
