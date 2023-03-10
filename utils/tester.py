@@ -85,7 +85,8 @@ class auto_detector:
     def __call__(
             self,
             path:str=os.path.join(HOME, 'logs'),
-            file:str='tester.auto_detector.tsv'
+            file:str='tester.auto_detector.tsv',
+            gen_kwargs:dict={},
         ) -> None:
 
         from multiprocessing import cpu_count
@@ -95,7 +96,7 @@ class auto_detector:
 
         data = []
         with ProcessPoolExecutor(cpu_count() - 1) as executor:
-            for i in executor.map(self.compute, self.generate()): data += i
+            for i in executor.map(self.compute, self.generate(**gen_kwargs)): data += i
         
         pd.DataFrame(data).to_csv(path_or_buf=os.path.join(path, file), sep='\t', index=False)
 
@@ -103,8 +104,8 @@ class auto_detector:
             self,
             lights:range=(0, 1,),
             scales:range=range(25, 51, 5),
-            angles:range=range(0, 46, 15),
-            attempts:range=range(1, 4, 1)
+            angles:range=range(0, 46, 3),
+            attempts:range=range(1, 6, 1)
     ) -> tuple:
         """ Генерация набора параметров для р
 
@@ -119,7 +120,7 @@ class auto_detector:
             files = (*filter(lambda x: '{}.scans.'.format(light) in x, 
                 os.listdir(os.path.join(HOME, 'tests', 'autos'))
             ),)
-            for file in files[:1]:
+            for file in files:
                 for scale in scales:
                     for angle in angles:
                         for attempt in attempts:
