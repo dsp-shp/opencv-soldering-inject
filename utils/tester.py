@@ -93,10 +93,13 @@ class auto_detector:
         from concurrent.futures import ProcessPoolExecutor
         try: import pandas as pd
         except: pass
+        from datetime import datetime
 
-        data = []
+        data, counter = [], 0
+        
         with ProcessPoolExecutor(cpu_count() - 1) as executor:
-            for i in executor.map(self.compute, self.generate(**gen_kwargs)): data += i
+            for i in executor.map(self.compute, self.generate(**gen_kwargs)): 
+                data += i; counter += 1
         
         pd.DataFrame(data).to_csv(path_or_buf=os.path.join(path, file), sep='\t', index=False)
 
@@ -104,7 +107,7 @@ class auto_detector:
             self,
             lights:range=(0, 1,),
             scales:range=range(25, 51, 5),
-            angles:range=range(0, 46, 3),
+            angles:range=range(0, 16, 1),
             attempts:range=range(1, 6, 1)
     ) -> tuple:
         """ Генерация набора параметров для р
@@ -194,7 +197,7 @@ class auto_detector:
         except Exception as e:
             det_cords = None
         finally:
-            det_extra = (*det_cords[-1].values(),) if det_cords[-1] else (None,)*4
+            det_extra = (*det_cords[-1].values(),) if det_cords[-1] and isinstance(det_cords, dict) else (None,)*4
             det_cords = det_cords[:-1] if det_cords else None
             return [{
                 ### параметры изображения,
