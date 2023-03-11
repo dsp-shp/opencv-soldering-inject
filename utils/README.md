@@ -128,7 +128,7 @@ class auto_detector:
 
     ### Генерация возможных сценариев
     def generate(self, ...) -> tuple: 
-        for light in (0, 1,): ### для каждого типа (с, без подсветки)
+        for files in types: ### для каждого типа (набор файлов с, без подсветки)
             for file in files: ### для каждого файла
                 for scale in scales: ### для каждого случайного фрагмента
                     for angle in angles: ### для каждого угла поворота

@@ -82,12 +82,7 @@ class unit_logger(unittest.TestCase):
 ### Auto-тестирование детекции
 class auto_detector:
 
-    def __call__(
-            self,
-            path:str=os.path.join(HOME, 'logs'),
-            file:str='tester.auto_detector.tsv',
-            gen_kwargs:dict={},
-        ) -> None:
+    def __call__(self, path:str=os.path.join(HOME, 'logs', 'tester.auto_detector.tsv'), **kwargs) -> None:
 
         from multiprocessing import cpu_count
         from concurrent.futures import ProcessPoolExecutor
@@ -98,45 +93,42 @@ class auto_detector:
         data, counter = [], 0
         
         with ProcessPoolExecutor(cpu_count() - 1) as executor:
-            for i in executor.map(self.compute, self.generate(**gen_kwargs)): 
+            for i in executor.map(self.compute, self.generate(**kwargs)): 
                 data += i; counter += 1
         
-        pd.DataFrame(data).to_csv(path_or_buf=os.path.join(path, file), sep='\t', index=False)
+        pd.DataFrame(data).to_csv(path_or_buf=path, sep='\t', index=False)
 
     def generate(
             self,
-            lights:range=(0, 1,),
+            types:tuple=tuple(tuple(
+                x for x in os.listdir(os.path.join(HOME, 'tests', 'autos')) if y + '.scans.' in x
+            ) for y in ('0', '1',)),
             scales:range=range(25, 51, 5),
-            angles:range=range(0, 16, 1),
-            attempts:range=range(1, 6, 1)
+            angles:range=range(0, 16),
+            attempts:range=range(1, 6)
     ) -> tuple:
-        """ Генерация набора параметров для р
+        """ Генерация детализации для отчетности
 
-        >>> ... lights ~ (range) – 
-        >>> ... lights ~ (range) – 
-        >>> ... lights ~ (range) – 
-        >>> ... lights ~ (range) – 
-        >>> yield (tuple) – 
+        >>> ... types ~ (tuple) – тип данных (набор файлов с, без подсветки)
+        >>> ... scales ~ (range) – масштаб фрагмента (отн. изображения)
+        >>> ... angles ~ (range) – угол поворота фрагмента
+        >>> ... attempts ~ (range) – номер итерации тестирования
+        >>> yield (tuple) – значения атрибутов детализации
         """
 
-        for light in lights:
-            files = (*filter(lambda x: '{}.scans.'.format(light) in x, 
-                os.listdir(os.path.join(HOME, 'tests', 'autos'))
-            ),)
-            for file in files:
+        for files in types:
+            for file in files[:5]:
                 for scale in scales:
                     for angle in angles:
                         for attempt in attempts:
-                            yield (light, files, file, scale, angle, attempt,)
+                            yield (files, file, scale, angle, attempt,)
 
-    def compute(
-            self,
-            params:tuple,
-            alt_path:str=None,
-        ) -> list:
+    def compute(self, params:tuple, alt_path:str=None) -> list:
         """ Рассчет ожидаемых и получение определяемых значений смещения и поворота
 
         >>> ... params ~ (tuple) – кортеж, содержащий параметры детекции
+        >>> ... alt_path ~ (str) – путь к альтернативному фрагменту:
+                    проверка на ложно-положительное обнаружение
         >>> return (list) - данные об одной итерации тестирования
         """
 
@@ -145,7 +137,7 @@ class auto_detector:
         try: from PIL import Image
         except: pass
 
-        light, files, file, scale, angle, attempt = params
+        files, file, scale, angle, attempt = params
 
         ### Определение возможных координат в исходных данных
         poses = [tuple(int(y) for y in x.split('.')[-2][1:-1].split(',')) for x in files]
@@ -177,8 +169,8 @@ class auto_detector:
             (obj_x + obj_size[0], obj_y)
         )
 
+        ### Подготовка изображений
         query_img = query_img.crop((obj_cords[1][0], obj_cords[0][1], obj_cords[3][0], obj_cords[2][1]))
-        ### Подготовка изображения
         train_img = train_img.rotate(angle, Image.NEAREST, expand=1)
         
         ### Ожидаемый результат
@@ -191,36 +183,41 @@ class auto_detector:
         ))
 
         ### Получаемый результат
+        det_error, detected, det_angle, det_cords = None, {}, None, None
         try:
-            det_kwargs = {"query_path":None, "train_path":None, "params":PARAMS, "log":logger_}
-            det_cords = (*detector(**det_kwargs, query_img=query_img, train_img=train_img).values(),)
+            detected = detector(
+                query_path=None,
+                train_path=None,
+                params=PARAMS,
+                log=logger_,
+                query_img=query_img, 
+                train_img=train_img
+            )
         except Exception as e:
-            det_cords = None
+            det_error = str(e)
         finally:
-            det_extra = (*det_cords[-1].values(),) if det_cords[-1] and isinstance(det_cords, dict) else (None,)*4
-            det_cords = det_cords[:-1] if det_cords else None
+            det_angle = detected.get('r', None)
+            det_cords = (*detected.values(),)[:4] if all(tuple(x in detected for x in ('x1', 'y1', 'x2', 'y2',))) == True else None
+            det_extra = {'det_{}'.format(x): y for x, y in detected.get('extra', {}).items()}
             return [{
-                ### параметры изображения,
+                ### Параметры изображения
                 "img_name": file, 
                 "img_size": train_img.size,
                 "img_rot_size": train_img.size, 
                 "img_contains": True if not alt_path else False,
-                "img_is_highlighted": bool(light),
-                ### ... фрагмента,
+                "img_is_highlighted": bool(int(file.split('.')[0])),
+                ### Параметры фрагмента
                 "obj_scale": scale,
                 "obj_size": obj_size,
                 "obj_cords": obj_cords, 
-                "obj_angle": -angle,
+                "obj_angle": -angle, ### корректировка направления
                 "obj_attem": attempt, 
                 "pre_cords": pre_cords, 
-                ### результаты детекции
-                "det_angle": det_cords[-1] if det_cords else None,
-                "det_cords": det_cords[:-1] if det_cords else None,
-                ### экстра
-                "det_query_keys": det_extra[0],
-                "det_train_keys": det_extra[1],
-                "det_matches": det_extra[2],
-                "det_good_matches": det_extra[3], 
+                ### Результаты детекции
+                "det_error": det_error,
+                "det_angle": det_angle,
+                "det_cords": det_cords,
+                **det_extra
             }] + (self.compute(params, alt_path=path) if not alt_path else [])
 
 
