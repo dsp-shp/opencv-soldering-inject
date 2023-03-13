@@ -91,10 +91,13 @@ class auto_detector:
         from datetime import datetime
 
         data, counter = [], 0
+
+        print(datetime.now().replace(microsecond=0))
         
         with ProcessPoolExecutor(cpu_count() - 1) as executor:
             for i in executor.map(self.compute, self.generate(**kwargs)): 
                 data += i; counter += 1
+                if counter % 5000 == 0: print(counter, datetime.now().replace(microsecond=0))
         
         pd.DataFrame(data).to_csv(path_or_buf=path, sep='\t', index=False)
 
@@ -117,7 +120,7 @@ class auto_detector:
         """
 
         for files in types:
-            for file in files[:5]:
+            for file in files:
                 for scale in scales:
                     for angle in angles:
                         for attempt in attempts:
