@@ -20,7 +20,6 @@
   - ```matplotlib``` – *https://pypi.org/project/matplotlib/*
 - Опциональные библиотеки (для тестирования):
   - ```pandas``` – *https://pypi.org/project/pandas/*
-  - ```pillow``` – *https://pypi.org/project/pillow/*
 
 ### Интеграция с C# кодом
 
