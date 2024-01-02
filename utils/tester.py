@@ -1,6 +1,7 @@
 import os
-import unittest
 import sys
+import typing
+import unittest
 try: from .detector import detector, PARAMS; from .logger import logger, HOME ### поддержка python3 -c "tester(...)"
 except: from detector import detector, PARAMS; from logger import logger, HOME ### поддержка python3 tester.py ...
 
@@ -8,16 +9,21 @@ except: from detector import detector, PARAMS; from logger import logger, HOME #
 class logger_: JOB, LOGS, process, info = None, None, lambda path, type: path, \
     lambda *args, **kwargs: None
 
-### Unit-тестирование детекции
 class unit_detector(unittest.TestCase):
+    """ Unit-тестирование детекции
 
-    def _(self, query_path:str, train_path:str, correct:tuple) -> None:
+    ...
+
+    """
+
+    def _(self, query_path: str, train_path: str, correct: tuple) -> None:
         """ Конструктор detector теста
 
-        >>> ... query_path ~ (str) – наименование фрагмента
-        >>> ... train_path ~ (str) – наименование изображения
-        >>> ... correct ~ (tuple) – кортеж, содержащий корректные результаты
-        >>> return (None)
+        Параметры:
+            query_path ~ (str) – наименование фрагмента
+            train_path ~ (str) – наименование изображения
+            correct ~ (tuple) – кортеж, содержащий корректные результаты
+
         """
         
         kwargs = {
@@ -42,8 +48,12 @@ class unit_detector(unittest.TestCase):
     def test_3(self) -> None:
         self._('unit-detector_query.png', 'unit-detector-3_train.png', (885, 804, 569, 572, 177))
 
-### Unit-тестирование методов логирования
 class unit_logger(unittest.TestCase):
+    """ Unit-тестирование методов логирования
+
+    ...
+
+    """
 
     def test_retain(self) -> None: ### проверка logger.retain(...)
         
@@ -78,9 +88,12 @@ class unit_logger(unittest.TestCase):
 
     def test_info(self) -> None: pass ### TODO: проверка logger.info(...)
     
-
-### Auto-тестирование детекции
 class auto_detector:
+    """ Auto-тестирование детекции
+
+    ...
+
+    """
 
     def __call__(self, path:str=os.path.join(HOME, 'logs', 'tester.auto_detector.tsv'), **kwargs) -> None:
 
@@ -112,11 +125,15 @@ class auto_detector:
     ) -> tuple:
         """ Генерация детализации для отчетности
 
-        >>> ... types ~ (tuple) – тип данных (набор файлов с, без подсветки)
-        >>> ... scales ~ (range) – масштаб фрагмента (отн. изображения)
-        >>> ... angles ~ (range) – угол поворота фрагмента
-        >>> ... attempts ~ (range) – номер итерации тестирования
-        >>> yield (tuple) – значения атрибутов детализации
+        Параметры:
+            types (tuple): тип данных (набор файлов с, без подсветки)
+            scales (range): масштаб фрагмента (отн. изображения)
+            angles (range): угол поворота фрагмента
+            attempts (range): номер итерации тестирования
+
+        Возвращает:
+            typing.Generator[tuple]: значения атрибутов детализации
+
         """
 
         for files in types:
@@ -129,10 +146,13 @@ class auto_detector:
     def compute(self, params:tuple, alt_path:str=None) -> list:
         """ Рассчет ожидаемых и получение определяемых значений смещения и поворота
 
-        >>> ... params ~ (tuple) – кортеж, содержащий параметры детекции
-        >>> ... alt_path ~ (str) – путь к альтернативному фрагменту:
-                    проверка на ложно-положительное обнаружение
-        >>> return (list) - данные об одной итерации тестирования
+        Параметры:
+            params (tuple): кортеж, содержащий параметры детекции
+            alt_path (str): путь к альтернативному фрагменту: проверка на ложно-положительное обнаружение
+
+        Возвращает:
+            list: данные об одной итерации тестирования
+
         """
 
         import math
@@ -225,4 +245,3 @@ class auto_detector:
 
 
 if __name__ == '__main__': unittest.main()
-

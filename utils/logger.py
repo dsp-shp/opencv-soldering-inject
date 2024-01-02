@@ -1,11 +1,17 @@
 import os
 import shutil
 import sys
+import typing
 from datetime import datetime, timedelta
 
 HOME = os.path.join(sys.path[-1], 'inject_solder/') ### путь к корню модуля
 
 class logger(object):
+    """ Реализация системы логирования
+
+    ...
+
+    """
 
     def __init__(self, func) -> None: 
         self.FUNC, self.JOB, self.LOGS, self.IMGS = \
@@ -16,11 +22,22 @@ class logger(object):
         return self.FUNC(*args, **kwargs) if kwargs.get('log', None) \
             else self.init(self.FUNC, *args, **kwargs)
 
-    def init(self, func, *args, logs:str=os.path.join(HOME, 'logs/'), attempt:int=1, **kwargs) -> None:
+    def init(
+        self, 
+        func, 
+        *args, 
+        logs: str = os.path.join(HOME, 'logs/'), 
+        attempt: int = 1, 
+        **kwargs
+    ) -> typing.Callable:
         """ Инициализация системы логирования поверх выполняемого процесса
 
-        >>> ... func ~ (callable) – выполняемая функция
-        >>> return (func ~ callable) – func с набором дополнительных параметров
+        Параметры:
+            func (callable): выполняемая функция
+
+        Возвращает:
+            typing.Callable: func с набором дополнительных параметров
+
         """
 
         import logging
@@ -88,15 +105,22 @@ class logger(object):
     #         ('' if divide == False else '\n' + self.SEPR)
     #     )
 
-    def transfer(self, path:str, type:str) -> str:
+    def transfer(
+        self, 
+        path: str, 
+        type: typing.Literal['query', 'train']
+    ) -> str:
         """ Бэкапирование изображений в logs/ директорию
-        (вызывается только в случае логирования выполнения в файл)
         
-        >>> ... path ~ (str) - путь к исходному файлу
-        >>> ... type ~ (str) – тип изображения:
-                    = 'query' – фрагмент
-                    = 'train' – изображение
-        >>> return (str) – путь к бэкапу изображения
+        Метод вызывается только в случае логирования выполнения в файл.
+
+        Параметры:
+            path (str): путь к исходному файлу
+            type (str): тип изображения: 'query' – фрагмент или 'train' – изображение
+        
+        Возвращает: 
+            (str): путь к бэкапу изображения
+
         """
 
         ### Если изображение уже было бэкапировано
@@ -111,11 +135,12 @@ class logger(object):
         
         return dest
     
-    def retain(self, days:int=3) -> None:
+    def retain(self, days: int = 3) -> None:
         """ Удаление неактуальных дневных партиций в logs/ директории
 
-        >>> ... days ~ (int) – глубина сохранения партиций
-        >>> return (None)
+        Параметры:
+            days (int): глубина сохранения партиций
+
         """
         
         logs = os.path.join(HOME, 'logs/')
